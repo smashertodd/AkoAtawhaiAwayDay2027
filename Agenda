@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ako Atawhai Away Day - Maungawhau Edition</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f4;
+            --surface-color: #ffffff;
+            --primary-green: #3a5a40;
+            --light-green: #a3b18a;
+            --accent-green: #588157;
+            --earth-brown: #8b5a2b;
+            --volcanic-grey: #343a40;
+            --text-main: #2b2b2b;
+            --text-muted: #6c757d;
+            --timer-alert: #d08c60;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 320px;
+            background-color: var(--primary-green);
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar h1 {
+            font-size: 22px;
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .sidebar h2 {
+            font-size: 13px;
+            color: var(--light-green);
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+        
+        .step-link {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .step-link:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .step-link.active {
+            background: rgba(255,255,255,0.15);
+            border-left: 4px solid var(--light-green);
+            font-weight: bold;
+        }
+        .step-link.completed {
+            border-left: 4px solid var(--accent-green);
+            opacity: 0.7;
+        }
+        .step-time {
+            font-size: 12px;
+            opacity: 0.8;
+            font-weight: normal;
+        }
+
+        /* Main Workspace */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Persistent Parking Lot Top Bar */
+        .top-bar {
+            background: var(--surface-color);
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+        }
+        .top-bar label {
+            font-weight: bold;
+            color: var(--earth-brown);
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        .top-bar input {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--bg-color);
+        }
+        .top-bar input:focus {
+            outline: 1px solid var(--accent-green);
+            background: #fff;
+        }
+        .top-bar button {
+            background: var(--earth-brown);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .top-bar button:hover {
+            background: #6e4620;
+        }
+
+        /* Workspace Area */
+        .workspace {
+            padding: 40px;
+            overflow-y: auto;
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .card {
+            background: var(--surface-color);
+            width: 100%;
+            max-width: 800px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--bg-color);
+        }
+        .card-title {
+            margin: 0;
+            font-size: 24px;
+            color: var(--primary-green);
+        }
+        
+        /* Timer UI */
+        .timer-badge {
+            background: var(--bg-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s;
+        }
+        .timer-badge.low {
+            color: var(--timer-alert);
+            background: #fff5f0;
+        }
+
+        /* Prompts / Original Notes */
+        .prompts-container {
+            background: var(--bg-color);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--light-green);
+            margin-bottom: 25px;
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--volcanic-grey);
+        }
+        .prompts-container ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .prompts-container li { margin-bottom: 8px; }
+        .prompts-container a { color: var(--accent-green); }
+
+        /* Notes Area */
+        .notes-area {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .notes-area label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-green);
+        }
+        textarea {
+            width: 100%;
+            flex-grow: 1;
+            min-height: 200px;
+            padding: 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.5;
+            resize: vertical;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            outline: 2px solid var(--light-green);
+            border-color: transparent;
+        }
+
+        /* Buttons */
+        .btn-next {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            align-self: flex-end;
+            transition: background 0.2s;
+        }
+        .btn-next:hover { background: var(--primary-green); }
+
+        /* Final Deliverable Output */
+        .deliverable-view {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+        }
+        .report-box {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 6px solid var(--primary-green);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .report-box h1, .report-box h2, .report-box h3 { color: var(--primary-green); }
+        .btn-copy {
+            background: var(--earth-brown);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h1>Ako Atawhai</h1>
+        <h2>Away Day 2026 • Mt Eden</h2>
+        <div id="nav-links">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        
+        <!-- PARKING LOT TOP BAR -->
+        <div class="top-bar">
+            <label>The Parking Lot 🐇</label>
+            <input type="text" id="parking-input" placeholder="Type a tangent, idea, or unanswerable question here..." onkeypress="handleParkingEnter(event)">
+            <button onclick="parkIdea()">Park It</button>
+        </div>
+
+        <!-- WORKSPACE -->
+        <div class="workspace">
+            
+            <!-- ACTIVE CARD -->
+            <div class="card" id="active-card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title" id="card-title">Welcome</h2>
+                        <div style="color: var(--text-muted); margin-top: 5px;" id="card-time">9:30 AM</div>
+                    </div>
+                    <div class="timer-badge" id="timer-badge">
+                        ⏱️ <span id="timer-text">--:--</span>
+                    </div>
+                </div>
+
+                <div class="prompts-container" id="prompts-container">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="notes-area">
+                    <label>Team Notes & Decisions:</label>
+                    <textarea id="step-notes" placeholder="Type your notes, agreements, and decisions for KA here..."></textarea>
+                    <button class="btn-next" onclick="saveAndNext()">Done, Ready for Next Step →</button>
+                </div>
+            </div>
+
+            <!-- FINAL DELIVERABLE REPORT -->
+            <div class="deliverable-view" id="deliverable-view">
+                <div class="report-box" id="report-content">
+                    <!-- Populated by JS -->
+                </div>
+                <button class="btn-copy" onclick="copyReport()">📋 Copy Report to Clipboard</button>
+                <span id="copy-feedback" style="margin-left:15px; color:var(--accent-green); font-weight:bold; display:none;">Copied!</span>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    // --- DATA ---
+    const steps = [
+        {
+            id: 'arrival', time: '9:30 AM', duration: 20,
+            title: 'Welcome & Whakawhanaungatanga',
+            prompts: ['Settle in at 55 Landscape Road.', 'Agree to the anti-rabbit hole rule: Park distracting ideas in the top bar.']
+        },
+        {
+            id: 'review2026', time: '9:50 AM', duration: 45,
+            title: '2026: The Good, Bad, and Dangerous',
+            prompts: ['Review, collate, bask in feedback from QR code.', 'Do we need to update???', 'Student survey themes.']
+        },
+        {
+            id: 'appointments', time: '10:35 AM', duration: 45,
+            title: 'Review Appointments',
+            prompts: [
+                'Review what we do within our appointments.',
+                'Can we streamline/standardise appointment times for ease of service delivery? <b>KA</b>',
+                'New LS to take over some AAAs?',
+                'Review template for appointment feedback: Make it consistent and <u>less cumbersome</u>.',
+                'North appointments – thoughts? <b>KA</b> | Why not Manukau?'
+            ]
+        },
+        {
+            id: 'nd_dss', time: '11:30 AM', duration: 45,
+            title: 'ND Provision & DSS',
+            prompts: [
+                'Review ND provision: General coping/study skills vs. Specific assessment help.',
+                'Discuss efficiency of working with DSS: Do we need to set some limits?',
+                'Action note: <i>Kate can send a kindly worded email.</i>'
+            ]
+        },
+  {
+            id: 'lunch', time: '12:15 PM', duration: 60,
+            title: 'Lunch Walk 🧀',
+            prompts: [
+                'Walk down to <b>Cheese on Toast</b>.',
+                '<a href="https://www.cheeseontoast.nz/menu" target="_blank">Menu: www.cheeseontoast.nz/menu</a>',
+                'No agenda. Enjoy the Maungawhau air and recharge.'
+            ]
+        },
+        {
+            id: 'udl_tools', time: '1:15 PM', duration: 45,
+            title: 'UDL & Tools (Repeat Use)',
+            prompts: [
+                'Create UDL resources for repeat use (to build study confidence over a semester/year).',
+                'e.g. microtasks + reward technique as an infographic.',
+                'Evidence-based resources.',
+                'Identify key, evidence-based tools to share with students (e.g. Kumo Study).',
+                'Limit the number of these tools.'
+            ]
+        },
+        {
+            id: 'workshops', time: '2:00 PM', duration: 40,
+            title: 'Workshops for 2027',
+            prompts: [
+                'Planning for international / ND / communication toolkit general workshops.',
+                'If we can lock in times/timetable can get temp to do the scheduling in Jan. <b>KA</b>'
+            ]
+        },
+        {
+            id: 'projects', time: '2:50 PM', duration: 30,
+            title: 'Projects & YLOC',
+            prompts: [
+                'Projects generally.',
+                'Discuss possibility of ND tile on YLOC.',
+                '<i>This needs to be agreed to first by Ngaire.</i>',
+                'Reference: <a href="https://aut.instructure.com/courses/7185/pages/postgraduate-readiness-course-homepage" target="_blank">PG Readiness Course</a>'
+            ]
+        },
+        {
+            id: 'deliverable_review', time: '3:20 PM', duration: 30,
+            title: 'Deliverables for KA',
+            prompts: [
+                'Review notes from today to ensure we have the deliverables for KA:',
+                '1. Review of the god/bad/dangerous to know from 2026 (??)',
+                '2. Any proposed change of service for Sem 1 2027.',
+                'Hit "Generate Final Report" below to collate everything.'
+            ]
+        },
+        {
+            id: 'drinks', time: '4:00 PM', duration: 0,
+            title: 'Drinks & Decompression 🐾',
+            prompts: [
+                'Networking drinks affair.',
+                'Liquor store around the corner.',
+                'Dogs are welcome!'
+            ]
+        }
+    ];
+
+    // --- STATE ---
+    let currentIndex = 0;
+    let userNotes = new Array(steps.length).fill('');
+    let parkingLot = [];
+    
+    // Timer state
+    let timerInterval;
+    let timeRemaining = 0;
+
+    // --- INITIALIZATION ---
+    function init() {
+        renderSidebar();
+        loadStep(0);
+    }
+
+    function renderSidebar() {
+        const nav = document.getElementById('nav-links');
+        nav.innerHTML = '';
+        steps.forEach((step, index) => {
+            const div = document.createElement('div');
+            div.className = `step-link ${index === currentIndex ? 'active' : ''} ${index < currentIndex ? 'completed' : ''}`;
+            div.innerHTML = `<span>${index + 1}. ${step.title.split(':')[0]}</span> <span class="step-time">${step.time}</span>`;
+            div.onclick = () => {
+                saveCurrentNotes();
+                loadStep(index);
+            };
+            nav.appendChild(div);
+        });
+    }
+
+    function loadStep(index) {
+        currentIndex = index;
+        const step = steps[currentIndex];
+        
+        // UI Toggles
+        document.getElementById('active-card').style.display = 'flex';
+        document.getElementById('deliverable-view').style.display = 'none';
+        
+        // Content
+        document.getElementById('card-title').innerText = step.title;
+        document.getElementById('card-time').innerText = step.time;
+        
+        const promptsHtml = '<ul>' + step.prompts.map(p => `<li>${p}</li>`).join('') + '</ul>';
+        document.getElementById('prompts-container').innerHTML = promptsHtml;
+        
+        document.getElementById('step-notes').value = userNotes[currentIndex] || '';
+        
+        // Button Logic
+        const btn = document.querySelector('.btn-next');
+        if (currentIndex === steps.length - 2) {
+            btn.innerText = "✨ Generate Final Report for KA";
+        } else if (currentIndex === steps.length - 1) {
+            btn.innerText = "View Final Report";
+        } else {
+            btn.innerText = "Done, Ready for Next Step →";
+        }
+
+        // Timer Logic
+        clearInterval(timerInterval);
+        if (step.duration > 0) {
+            document.getElementById('timer-badge').style.display = 'flex';
+            startTimer(step.duration * 60);
+        } else {
+            document.getElementById('timer-badge').style.display = 'none';
+        }
+
+        renderSidebar();
+    }
+
+    function saveCurrentNotes() {
+        const textarea = document.getElementById('step-notes');
+        userNotes[currentIndex] = textarea.value;
+    }
+
+    function saveAndNext() {
+        saveCurrentNotes();
+        if (currentIndex < steps.length - 2) {
+            loadStep(currentIndex + 1);
+        } else {
+            // If on the second to last, or last, generate the report
+            generateReport();
+        }
+    }
+
+    // --- PARKING LOT ---
+    function handleParkingEnter(e) {
+        if (e.key === 'Enter') parkIdea();
+    }
+
+    function parkIdea() {
+        const input = document.getElementById('parking-input');
+        const idea = input.value.trim();
+        if (idea) {
+            parkingLot.push(idea);
+            input.value = '';
+            // Visual feedback
+            input.placeholder = "Parked! Type another...";
+            setTimeout(() => input.placeholder = "Type a tangent, idea, or unanswerable question here...", 2000);
+        }
+    }
+
+    // --- TIMER ---
+    function startTimer(seconds) {
+        timeRemaining = seconds;
+        updateTimerUI();
+        
+        timerInterval = setInterval(() => {
+            timeRemaining--;
+            updateTimerUI();
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+            }
+        }, 1000);
+    }
+
+    function updateTimerUI() {
+        const badge = document.getElementById('timer-badge');
+        const text = document.getElementById('timer-text');
+        
+        if (timeRemaining <= 0) {
+            text.innerText = "Time's Up!";
+            badge.classList.add('low');
+            return;
+        }
+
+        const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+        const s = (timeRemaining % 60).toString().padStart(2, '0');
+        text.innerText = `${m}:${s}`;
+
+        if (timeRemaining < 300) { // Under 5 mins
+            badge.classList.add('low');
+        } else {
+            badge.classList.remove('low');
+        }
+    }
+
+    // --- FINAL REPORT ---
+    function generateReport() {
+        saveCurrentNotes();
+        document.getElementById('active-card').style.display = 'none';
+        document.getElementById('deliverable-view').style.display = 'block';
+        
+        currentIndex = steps.length - 1; // Set active sidebar to end
+        renderSidebar();
+
+        let html = `
+            <h1>Ako Atawhai Away Day - Final Deliverables for KA</h1>
+            <p><strong>Date:</strong> 16 Nov 2026 | <strong>Location:</strong> 55 Landscape Road</p>
+            <hr style="border: 1px solid #eee; margin: 20px 0;">
+        `;
+
+        // Main Notes
+        steps.forEach((step, index) => {
+            if (userNotes[index] && userNotes[index].trim() !== '') {
+                html += `<h3>${step.title}</h3>`;
+                // Convert line breaks to HTML breaks for report
+                const formattedNotes = userNotes[index].replace(/\n/g, '<br>');
+                html += `<p style="background: #f9f9f9; padding: 15px; border-left: 3px solid #588157; margin-bottom: 25px;">${formattedNotes}</p>`;
+            }
+        });
+
+        // Parking Lot
+        if (parkingLot.length > 0) {
+            html += `<h3>The Parking Lot (Items to Follow Up)</h3><ul>`;
+            parkingLot.forEach(item => {
+                html += `<li>${item}</li>`;
+            });
+            html += `</ul>`;
+        } else {
+            html += `<h3>The Parking Lot</h3><p><em>No items were parked today. Stayed beautifully on track!</em></p>`;
+        }
+
+        document.getElementById('report-content').innerHTML = html;
+    }
+
+    function copyReport() {
+        const content = document.getElementById('report-content').innerText; // gets plain text version nicely
+        const htmlContent = document.getElementById('report-content').innerHTML;
+
+        // Try to copy as rich text to clipboard so formatting stays in Word/Email
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const textBlob = new Blob([content], { type: 'text/plain' });
+        
+        try {
+            const data = [new ClipboardItem({ 'text/html': blob, 'text/plain': textBlob })];
+            navigator.clipboard.write(data).then(() => {
+                const feedback = document.getElementById('copy-feedback');
+                feedback.style.display = 'inline';
+                setTimeout(() => feedback.style.display = 'none', 3000);
+            });
+        } catch (err) {
+            // Fallback for older browsers
+            navigator.clipboard.writeText(content).then(() => {
+                const feedback = document.getElementById('copy-feedback');
+                feedback.style.display = 'inline';
+                setTimeout(() => feedback.style.display = 'none', 3000);
+            });
+        }
+    }
+
+    // Start App
+    window.onload = init;
+
+</script>
+</body>
+</html>
